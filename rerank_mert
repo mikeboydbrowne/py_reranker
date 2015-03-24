@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 import optparse
 import sys
+import argparse # optparse is deprecated
+import math
+from itertools import islice # slicing for iterators
 
 optparser = optparse.OptionParser()
 optparser.add_option("-k", "--kbest-list", dest="input", default="data/dev+test.100best", help="100-best translation lists")
@@ -12,22 +15,79 @@ weights = {'p(e)'       : float(opts.lm) ,
            'p(e|f)'     : float(opts.tm1),
            'p_lex(f|e)' : float(opts.tm2)}
 
+# Functions to Caluclate Bleu
+
+def ngram_calc(h, ref, val):
+    num_grams           = len(ref) - val + 1
+    num_matches         = 0.0
+    num_matches_inter   = 0
+
+    for i in range(0, num_grams):
+        if ngram_in(ref[i:i + val], h) == 1:
+            num_matches = num_matches + 1
+    return num_matches / num_grams
+
+def ngram_in(ref, h):
+    num_grams  = len(h) - len(ref) + 1
+    for i in range(0, num_grams, + 1):
+        if ref == h[i: i + len(ref)]:
+            return 1
+    return 0
+def bleu_calc(h, ref):
+
+    # calculating brevity penalty
+    bp = brevity_penalty(h, ref)
+
+    # calculating the precisions of all n-gram translations
+    precisions = []
+    for i in range(1, len(ref)):
+        precisions.append(ngram_calc(h, ref, i))
+
+    # calculating the bleu score
+    ret_val = 0.0
+    for p in precisions:
+        if p > 0.0:
+            ret_val = ret_val + p
+    return bp * ret_val
+
+def brevity_penalty(h, ref):
+    ret_val = 0.0
+    if len(h) < len(ref):
+        ret_val = 1.0
+    else:
+        ret_val = pow(math.e, (1.0 - len(ref)/len(h)))
+    return ret_val
+
 all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
+all_refs = [pair.split('\n') for pair in open("data/dev.ref")]
+
+# print all_refs
+
 num_sents = len(all_hyps) / 100 # of 100 sentence groupings
+num_sents = num_sents
+
+# print num_sents
 
 # for references 0 to 800
 for s in xrange(0, num_sents):
   hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100] # getting an array of 100 hypotheses
-  (best_score, best) = (-1e300, '')                   # tuple of best score, sentence
-  for (num, hyp, feats) in hyps_for_one_sent:         # for each sentence in that hyp array
-    score = 0.0
-    for feat in feats.split(' '):                     # for each metric in the p(e|f), p(e), p_lex(e|f) grouping
-      (k, v) = feat.split('=')                        # get each key-value pair
-      score += weights[k] * float(v)                  # multiply it by its weight
-    if score > best_score:                            # if the score is an improvement
-      (best_score, best) = (score, hyp)               # update the record
+  if s < 400:
+    reference_trans   = all_refs[s]
+    (best_score, best) = (-1e300, '')
+  for (num, hyp, feats) in hyps_for_one_sent:
+    score = bleu_calc(hyp, reference_trans)
+    if score > best_score:
+      (best_score, best) = (score, hyp)
+  else:
+    (best_score, best) = (-1e300, '')                   # tuple of best score, sentence
+    for (num, hyp, feats) in hyps_for_one_sent:         # for each sentence in that hyp array
+      score = 0.0
+      for feat in feats.split(' '):                     # for each metric in the p(e|f), p(e), p_lex(e|f) grouping
+        (k, v) = feat.split('=')                        # get each key-value pair
+        score += weights[k] * float(v)                  # multiply it by its weight
+      if score > best_score:                            # if the score is an improvement
+        (best_score, best) = (score, hyp)               # update the record
   try:
     sys.stdout.write("%s\n" % best)                   # print the result once you've run through all 100 sentences
   except (Exception):
     sys.exit(1)
-
