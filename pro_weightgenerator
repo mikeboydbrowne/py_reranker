@@ -1,1 +1,25 @@
 from sklearn import linear_model
+
+all_refs = [x.split('\n')[0] for x in open("pro.out")]
+
+score_diffs = []
+x_vectors = []
+
+for i in all_refs:
+  (x, g) = i.split('],')
+  stringified_x = x.split(',')
+  float_x = []
+  float_x.append(float(stringified_x[0][2:]))
+  float_x.append(float(stringified_x[1]))
+  float_x.append(float(stringified_x[2]))
+
+  x_vectors.append(float_x)
+  score_diffs.append(float(g[1] + '1'))
+
+clf = linear_model.LinearRegression()
+clf.fit(x_vectors, score_diffs)
+coefs = clf.coef_
+
+print coefs
+
+

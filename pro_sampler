@@ -22,7 +22,7 @@ weights = {'p(e)'       : float(opts.lm) ,
 all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
 all_refs = [pair.split('\n') for pair in open("data/dev.ref")]
 
-num_sents = len(all_hyps) / 100 # of 100 sentence groupings
+num_sents = (len(all_hyps) / 100) - 400 # of 100 sentence groupings
 
 # for references 0 to 800
 for s in xrange(0, num_sents):
