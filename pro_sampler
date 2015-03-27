@@ -22,7 +22,7 @@ weights = {'p(e)'       : float(opts.lm) ,
 all_hyps = [pair.split(' ||| ') for pair in open(opts.input)]
 all_refs = [pair.split('\n') for pair in open("data/dev.ref")]
 
-num_sents = (len(all_hyps) / 100) - 400 # of 100 sentence groupings
+num_sents = (len(all_hyps) / 100) - len(all_refs) # of 100 sentence groupings
 
 # for references 0 to 800
 for s in xrange(0, num_sents):
@@ -55,7 +55,7 @@ for s in xrange(0, num_sents):
     # print "\n"
 
     # if the difference is above a threshold, dump into V
-    if abs(g1 - g2) > 0.005:
+    if abs(g1 - g2) > 0.05:
       V[abs(g1 - g2)] = (hyps_for_one_sent[j1], hyps_for_one_sent[j2])
 
 
@@ -72,38 +72,39 @@ for s in xrange(0, num_sents):
     hyp_two_x = hyp_two[2].split(' ')
 
     # caluclating bleu score
-    hyp_one_bleu = bleu(list(bleu_stats(s1, ref)))
-    hyp_two_bleu = bleu(list(bleu_stats(s2, ref)))
+    hyp_one_bleu = bleu(list(bleu_stats(hyp_one_sent, ref)))
+    hyp_two_bleu = bleu(list(bleu_stats(hyp_two_sent, ref)))
 
     # getting x vector
     x1_vector = []
+    x1_bleu_diff = hyp_one_bleu - hyp_two_bleu
     x2_vector = []
+    x2_bleu_diff = hyp_two_bleu - hyp_one_bleu
     for i in hyp_one_x:
       x1_vector.append(float(i.split('=')[1]))
 
     for i in hyp_two_x:
       x2_vector.append(float(i.split('=')[1]))
 
+    # print hyp_one_sent
+    # print hyp_two_sent
+    # print hyp_one_bleu
+    # print hyp_two_bleu
+    # print x1_bleu_diff
+    # print x2_bleu_diff
+    # print x1_vector
+    # print x2_vector
+
     # calculating first output value
-    first_output_x = [x1 - x2 for (x1, x2) in zip(x1_vector, x2_vector)]
-    first_output_sign = ''
-    if (hyp_one_bleu - hyp_two_bleu) < 0:
-      first_output_sign = '-'
-    else:
-      first_output_sign = "+"
+    first_output_x = str([x1 - x2 for (x1, x2) in zip(x1_vector, x2_vector)]) + "; " + str(x1_bleu_diff)
 
     # calculating second output value
-    second_output_x = [x1 - x2 for (x2, x1) in zip(x1_vector, x2_vector)]
-    second_output_sign = ''
-    if (hyp_two_bleu - hyp_one_bleu) < 0:
-      second_output_sign = '-'
-    else:
-      second_output_sign = "+"
+    second_output_x = str([x1 - x2 for (x2, x1) in zip(x1_vector, x2_vector)]) + "; " + str(x2_bleu_diff)
 
     # output values
     try:
-      sys.stdout.write("%s\n" % ("(" + str(first_output_x) + ", " + first_output_sign + ")"))
-      sys.stdout.write("%s\n" % ("(" + str(second_output_x) + ", " + second_output_sign + ")"))
+      sys.stdout.write("%s\n" % first_output_x)
+      sys.stdout.write("%s\n" % second_output_x)
     except (Exception):
         sys.exit(1)
 
