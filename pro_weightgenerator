@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from sklearn import linear_model
+import sys
 
-all_refs = [x.split('\n')[0] for x in open("pro.out")]
+all_refs = [x.split('\n')[0] for x in sys.stdin]
 
 score_diffs = []
 x_vectors = []
 
+# build the score differential vector and vector of x vectors
 for i in all_refs:
   (x, g) = i.split(';')
   temporary_x = []
@@ -14,11 +16,10 @@ for i in all_refs:
   score_diffs.append(float(g))
   x_vectors.append(temporary_x)
 
+# run linear regression to get weights for three components of x vector
 clf = linear_model.LinearRegression()
 clf.fit(x_vectors, score_diffs)
 coefs = clf.coef_
 
+# print weights
 print coefs
-
-# rather than binary, use magnitude
-#

@@ -101,7 +101,7 @@ for s in xrange(0, num_sents):
     # calculating second output value
     second_output_x = str([x1 - x2 for (x2, x1) in zip(x1_vector, x2_vector)]) + "; " + str(x2_bleu_diff)
 
-    # output values
+    # printing values to output
     try:
       sys.stdout.write("%s\n" % first_output_x)
       sys.stdout.write("%s\n" % second_output_x)

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import re
+
+# module to count number of untranslated russian words
 def numUntrans(hypothesis):
   retNum = 0
   for x in hypothesis.split():
