@@ -27,6 +27,8 @@ num_sents = (len(all_hyps) / 100) - len(all_refs) # of 100 sentence groupings
 # for references 0 to 800
 for s in xrange(0, num_sents):
 
+  print '.'
+
   ref = all_refs[s][:-1]
   ref = ref[0].split(' ')
   hyps_for_one_sent = all_hyps[s * 100:s * 100 + 100] # getting an array of 100 hypotheses
